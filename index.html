@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<title>Асистент харчування</title>
+<meta name="theme-color" content="#FCFBF9" />
+<link rel="manifest" href="./manifest.json" />
+<link rel="apple-touch-icon" href="./icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Харчування" />
+<link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+  <header class="app-header">
+    <button id="prevDay" class="nav-arrow" aria-label="Попередній день">‹</button>
+    <div class="date-block">
+      <span id="dateLabel" class="date-label">Сьогодні</span>
+      <button id="copyYesterday" class="link-btn">Скопіювати вчора</button>
+    </div>
+    <button id="nextDay" class="nav-arrow" aria-label="Наступний день">›</button>
+  </header>
+
+  <main class="app-main">
+
+    <!-- Calorie ring -->
+    <section class="ring-section">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 180 180" class="ring-svg">
+          <circle cx="90" cy="90" r="80" class="ring-track" />
+          <circle id="ringProgress" cx="90" cy="90" r="80" class="ring-progress" />
+        </svg>
+        <div class="ring-center">
+          <div class="ring-current-wrap">
+            <span id="ringCurrent" class="ring-current">0</span>
+          </div>
+          <span id="ringGoal" class="ring-goal">/ 1800 ккал</span>
+          <span id="ringRemaining" class="ring-remaining">Залишилось 1800 ккал</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Macro cards -->
+    <section id="macroCards" class="macro-cards"></section>
+
+    <!-- Daily digest -->
+    <section id="digest" class="digest digest--hidden">
+      <div class="digest__header">
+        <div class="digest__stars" id="digestStars">☆☆☆☆☆</div>
+        <div class="digest__score" id="digestScore">0 / 10</div>
+      </div>
+      <div class="digest__title">Аналіз дня</div>
+      <ul id="digestInsights" class="digest__list"></ul>
+    </section>
+
+    <!-- Meals -->
+    <section id="mealsList" class="meals-list"></section>
+
+  </main>
+
+  <div id="toast" class="toast"></div>
+</div>
+
+<!-- Add Food Modal -->
+<div id="addFoodModal" class="modal">
+  <div class="modal__backdrop"></div>
+  <div class="modal__sheet modal__sheet--tall">
+    <div class="modal__handle"></div>
+    <div class="modal__header">
+      <span class="modal__title">Додати їжу</span>
+      <button class="modal__close" aria-label="Закрити">✕</button>
+    </div>
+
+    <div class="modal__search">
+      <input id="foodSearchInput" type="text" placeholder="Пошук продукту…" autocomplete="off" />
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn tab-btn--active" data-tab="search">Усі</button>
+      <button class="tab-btn" data-tab="recent">Останні</button>
+      <button class="tab-btn" data-tab="favorites">Улюблені</button>
+    </div>
+
+    <div id="foodList" class="food-list"></div>
+
+    <button id="createProductBtn" class="btn-secondary btn-block">+ Створити свій продукт</button>
+  </div>
+</div>
+
+<!-- Grams Modal -->
+<div id="gramsModal" class="modal">
+  <div class="modal__backdrop"></div>
+  <div class="modal__sheet">
+    <div class="modal__handle"></div>
+    <div class="modal__header">
+      <span class="modal__title">Продукт</span>
+      <button class="modal__close" aria-label="Закрити">✕</button>
+    </div>
+    <form id="gramsForm" class="grams-form">
+      <div class="grams-input-row">
+        <input id="gramsInput" type="number" min="0" step="1" inputmode="decimal" />
+        <span id="gramsUnitLabel" class="grams-unit">г</span>
+      </div>
+      <div class="grams-preview">
+        <div class="grams-preview__item">
+          <span id="previewKcal">0</span>
+          <label>ккал</label>
+        </div>
+        <div class="grams-preview__item">
+          <span id="previewProtein">0</span>
+          <label>білки</label>
+        </div>
+        <div class="grams-preview__item">
+          <span id="previewFat">0</span>
+          <label>жири</label>
+        </div>
+        <div class="grams-preview__item">
+          <span id="previewCarbs">0</span>
+          <label>вуглев.</label>
+        </div>
+      </div>
+      <button type="submit" class="btn-primary btn-block">Додати</button>
+    </form>
+  </div>
+</div>
+
+<!-- Create Product Modal -->
+<div id="createProductModal" class="modal">
+  <div class="modal__backdrop"></div>
+  <div class="modal__sheet modal__sheet--tall">
+    <div class="modal__handle"></div>
+    <div class="modal__header">
+      <span class="modal__title">Новий продукт</span>
+      <button class="modal__close" aria-label="Закрити">✕</button>
+    </div>
+    <form id="createProductForm" class="create-product-form">
+      <label class="field">
+        <span>Назва</span>
+        <input name="productName" type="text" required placeholder="Наприклад, Куряче філе" />
+      </label>
+
+      <label class="field">
+        <span>Категорія</span>
+        <select name="productCategory">
+          <option value="meat">М'ясо</option>
+          <option value="grains">Крупи</option>
+          <option value="dairy">Молочне</option>
+          <option value="vegetables">Овочі</option>
+          <option value="fruits">Фрукти</option>
+          <option value="drinks">Напої</option>
+          <option value="sauces">Соуси</option>
+          <option value="sweets">Солодощі</option>
+          <option value="other">Інше</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Одиниця виміру</span>
+        <select name="productUnit" id="productUnit">
+          <option value="g">на 100 г</option>
+          <option value="piece">на 1 шт</option>
+        </select>
+      </label>
+
+      <label class="field hidden" id="unitWeightRow">
+        <span>Вага однієї штуки (г)</span>
+        <input name="productUnitWeight" type="number" min="1" step="1" placeholder="55" />
+      </label>
+
+      <div class="field-grid">
+        <label class="field">
+          <span>Калорії</span>
+          <input name="productKcal" type="number" min="0" step="0.1" required />
+        </label>
+        <label class="field">
+          <span>Білки, г</span>
+          <input name="productProtein" type="number" min="0" step="0.1" required />
+        </label>
+        <label class="field">
+          <span>Жири, г</span>
+          <input name="productFat" type="number" min="0" step="0.1" required />
+        </label>
+        <label class="field">
+          <span>Вуглеводи, г</span>
+          <input name="productCarbs" type="number" min="0" step="0.1" required />
+        </label>
+      </div>
+
+      <button type="submit" class="btn-primary btn-block">Зберегти продукт</button>
+    </form>
+  </div>
+</div>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>
